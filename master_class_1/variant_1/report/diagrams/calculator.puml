@@ -1,0 +1,38 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam defaultFontSize 14
+hide footbox
+participant "Процессор МК" as CPU
+participant "SysTick" as ST
+participant "GPIO и клавиатура" as KEY
+participant "TM1637" as DISP
+participant "USART2" as UART
+CPU -> KEY: Настройка строк и столбцов
+CPU -> DISP: Инициализация
+CPU -> ST: Период прерываний 1 мс
+loop Во время работы программы
+ ST -> CPU: Прерывание
+ CPU -> CPU: tickCount++ и возврат в main
+ CPU -> KEY: Каждые 5 мс опрос матрицы
+ KEY --> CPU: Код клавиши
+ CPU -> CPU: Подтверждение состояния 30 мс
+ alt Цифра
+  CPU -> CPU: Ввод операнда A или B
+  CPU -> DISP: Показать операнд
+ else Клавиша * после A
+  CPU -> CPU: Выбрать +, -, *, / по циклу
+  CPU -> DISP: A, номер операции, B
+  CPU -> UART: OP и выбранная операция
+ else Клавиша # и введены A и B
+  CPU -> CPU: Проверка делителя и вычисление
+  CPU -> DISP: Результат или Err
+  CPU -> UART: RESULT или ERROR
+ end
+end
+note over CPU,DISP
+Передача данных: команда 0x40,
+адрес 0xC0, четыре байта сегментов,
+команда включения и яркости 0x8F.
+end note
+@enduml
